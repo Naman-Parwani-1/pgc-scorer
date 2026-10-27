@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PGC Scorer</string>
+    <string name="title_activity_main">PGC Scorer</string>
+    <string name="package_name">in.pgcscorer.app</string>
+    <string name="custom_url_scheme">in.pgcscorer.app</string>
+</resources>

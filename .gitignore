@@ -1,0 +1,18 @@
+node_modules/
+dist/
+*.local
+.DS_Store
+
+# Capacitor / Android build output
+android/app/build/
+android/build/
+android/.gradle/
+android/app/src/main/assets/public/
+android/app/release.keystore
+android/local.properties
+*.apk
+*.keystore
+!android/app/debug.keystore
+
+.vscode/
+.idea/

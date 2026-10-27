@@ -1,0 +1,108 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # Secrets cannot be referenced directly in a step-level `if`, so they are
+    # lifted into env here and the steps branch on env instead.
+    env:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # Java 17, not 21: this project pins Gradle 8.2.1 (via the Capacitor
+      # wrapper), and Gradle only gained Java 21 support in 8.5. Building on
+      # 21 fails with "Unsupported class file major version 65".
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run engine tests
+        run: npm test
+
+      - name: Build web assets
+        run: npx vite build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      # A release keystore is used when the repo has KEYSTORE_BASE64 set.
+      # Without it the workflow still produces a debug-signed APK, which
+      # sideloads onto a phone perfectly well.
+      - name: Decode release keystore
+        id: keystore
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "No release keystore configured — building a debug-signed APK."
+          fi
+
+      - name: Build release APK
+        if: steps.keystore.outputs.present == 'true'
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file="$PWD/app/release.keystore" \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+          cp app/build/outputs/apk/release/app-release.apk ../pgc-scorer.apk
+
+      - name: Build debug APK
+        if: steps.keystore.outputs.present == 'false'
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk ../pgc-scorer.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: pgc-scorer-apk
+          path: pgc-scorer.apk
+          retention-days: 90
+
+      # A rolling "latest" release gives a stable link to open on the phone.
+      - name: Publish to latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: PGC Scorer — latest build
+          body: |
+            Install on Android: download `pgc-scorer.apk` below, open it, and
+            allow installation from this source when prompted.
+
+            Built from commit ${{ github.sha }}.
+          files: pgc-scorer.apk

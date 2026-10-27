@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  background: #0b2c21;
+  color: #fdfcf7;
+  font-size: 17px;
+  /* Respect the notch on Android/iOS when installed. */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* Large, unambiguous tap targets — the whole app is used one-handed in sunlight. */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl font-semibold
+           min-h-[52px] px-5 text-base active:scale-[0.97] transition-transform
+           select-none;
+  }
+  .btn-primary { @apply btn bg-sand-50 text-turf-900; }
+  .btn-ghost   { @apply btn bg-turf-700 text-sand-50 border border-turf-600; }
+  .btn-danger  { @apply btn bg-flag-500 text-white; }
+  .card {
+    @apply rounded-2xl bg-turf-800 border border-turf-700 p-4;
+  }
+  .field {
+    @apply w-full rounded-xl bg-turf-900 border border-turf-600 px-4 py-3
+           text-sand-50 text-base outline-none focus:border-sand-200;
+  }
+  .label { @apply block text-sm font-medium text-sand-200/80 mb-1.5; }
+}
+
+/* Horizontal hole strip should not show a scrollbar. */
+.no-bar::-webkit-scrollbar { display: none; }
+.no-bar { scrollbar-width: none; }
