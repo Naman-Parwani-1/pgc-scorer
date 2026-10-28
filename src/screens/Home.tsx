@@ -11,7 +11,7 @@ export default function Home() {
 
   return (
     <Screen
-      title="PGC Scorer"
+      title="ADS Falcons Scorer"
       subtitle="Panchkula Golf Club"
       action={
         <button className="btn-primary !min-h-[44px] !px-4" onClick={() => nav('/event/new')}>

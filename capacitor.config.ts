@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'in.pgcscorer.app',
-  appName: 'PGC Scorer',
+  appName: 'ADS Falcons Scorer',
   webDir: 'dist',
   android: {
     allowMixedContent: false,

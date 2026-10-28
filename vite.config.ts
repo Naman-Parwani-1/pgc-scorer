@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon-192.png', 'icon-512.png'],
       manifest: {
-        name: 'PGC Scorer',
-        short_name: 'PGC',
+        name: 'ADS Falcons Scorer',
+        short_name: 'Falcons',
         description: 'Panchkula Golf Club competition scoring',
         theme_color: '#0f3d2e',
         background_color: '#0f3d2e',
