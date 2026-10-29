@@ -16,3 +16,13 @@ android/local.properties
 
 .vscode/
 .idea/
+
+# Capacitor / iOS build output
+ios/App/Pods/
+ios/App/build/
+ios/App/DerivedData/
+ios/App/App/public/
+ios/App/Podfile.lock
+*.ipa
+*.p12
+*.mobileprovision

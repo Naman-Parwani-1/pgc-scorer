@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Apps
 
 on:
   push:
@@ -7,9 +7,11 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
-  build:
+  android:
     runs-on: ubuntu-latest
 
     # Secrets cannot be referenced directly in a step-level `if`, so they are
@@ -113,10 +115,91 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: PGC Scorer — latest build
+          name: ADS Falcons Scorer — latest build
           body: |
             Install on Android: download `pgc-scorer.apk` below, open it, and
             allow installation from this source when prompted.
 
+            There is no signed iOS build here — Apple requires a paid
+            Developer Program membership to sign an app for installation on
+            a real iPhone. The `ios` job in this workflow only proves the
+            iOS project builds cleanly for the Simulator; see its log for
+            details. The web app itself can be added to an iPhone home
+            screen as a PWA from the GitHub Pages deployment of this repo
+            (Safari → Share → Add to Home Screen) with no signing needed.
+
             Built from commit ${{ github.sha }}.
           files: pgc-scorer.apk
+
+  ios:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets
+        run: npx vite build
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      - name: Install CocoaPods dependencies
+        working-directory: ios/App
+        run: pod install
+
+      # No Apple Developer account/certificate is configured, so this is a
+      # Simulator-only, unsigned build. It proves the iOS project compiles
+      # cleanly from this source — it does not produce anything installable
+      # on a real iPhone. Device installation requires a paid Apple
+      # Developer Program membership and a signing certificate +
+      # provisioning profile; once those exist, this job can be extended
+      # (the same way the Android job uses a release keystore) to produce a
+      # signed, device-installable or TestFlight-ready build.
+      - name: Build for iOS Simulator (unsigned)
+        working-directory: ios/App
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty || true
+
+  pages:
+    needs: android
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets
+        run: npx vite build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
