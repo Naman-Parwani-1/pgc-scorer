@@ -1,0 +1,15 @@
+# Protect the config file from being served over the web.
+<Files "config.php">
+  Require all denied
+</Files>
+
+# Fallback for older Apache (2.2)
+<IfModule !mod_authz_core.c>
+  <Files "config.php">
+    Order allow,deny
+    Deny from all
+  </Files>
+</IfModule>
+
+# Send a clean 404 for directory listing.
+Options -Indexes

@@ -26,3 +26,6 @@ ios/App/Podfile.lock
 *.ipa
 *.p12
 *.mobileprovision
+
+# Backend secrets (created by install.php on the server)
+api/config.php
